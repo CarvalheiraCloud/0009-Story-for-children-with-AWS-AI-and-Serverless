@@ -1,0 +1,26 @@
+# *******************************************************************
+# Downloading the FFmpeg ".tar" file, and creating the Lambda Layer.
+# *******************************************************************
+
+#1# select the folder you will work
+
+#2# Clean up previous attempts
+rm -rf bin ffmpeg-git-* ffmpeg-layer.zip
+
+#3# Create the bin directory (required structure for Lambda Layer)
+mkdir -p bin
+
+#4# Download the file straight from the link you found
+curl -L -O https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-amd64-static.tar.xz
+
+#5# Decompress the file
+tar -xvf ffmpeg-git-amd64-static.tar.xz
+
+# Move the binary to the bin directory (the asterisk automatically captures the extracted folder)
+cp ffmpeg-git-*-amd64-static/ffmpeg bin/
+
+# VERY IMPORTANT: Grant execute permissions for AWS Linux
+chmod +x bin/ffmpeg
+
+# Open the directory ffmpeg-layer, and execute the command below to create the .zip for lambda layer.
+zip -9 -r ../ffmpeg-subtitle-layer.zip .
