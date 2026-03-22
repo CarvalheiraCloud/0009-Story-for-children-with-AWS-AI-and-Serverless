@@ -1,0 +1,518 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "model": "amazon.nova-lite-v1:0",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAwsBedrock",
+      "typeVersion": 1.1,
+      "position": [
+        -880,
+        112
+      ],
+      "id": "dd29b861-1f35-4095-85c6-e45c5f95cf01",
+      "name": "AWS Bedrock Chat Model",
+      "credentials": {
+        "aws": {
+          "id": "7jBWQE26lrRKVQAa",
+          "name": "awsIamApi"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1664,
+        -160
+      ],
+      "id": "fbbb1710-4b64-4afc-b6f8-edae3e20ae66",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "detectSentiment",
+        "text": "={{ $json.output }}"
+      },
+      "type": "n8n-nodes-base.awsComprehend",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        -160
+      ],
+      "id": "c6530a6b-f685-4093-b350-0395b35f2653",
+      "name": "Detect Sentiment",
+      "credentials": {
+        "aws": {
+          "id": "7jBWQE26lrRKVQAa",
+          "name": "awsIamApi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "470e7858-e191-451d-ae33-9eba2b87e26a",
+              "leftValue": "={{ $json.Sentiment }}",
+              "rightValue": "POSITIVE",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        112,
+        96
+      ],
+      "id": "3c5d0e09-aaaf-450a-886f-9bd26db977f8",
+      "name": "IS IT A POSITIVE STORY?"
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -96,
+        -160
+      ],
+      "id": "9ee13ccc-9d26-4d2e-b9b9-2d76d948158c",
+      "name": "WAIT 1s",
+      "webhookId": "f46c2dde-157c-47a7-a3d9-18f253b69566"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        768,
+        -192
+      ],
+      "id": "39d94421-190d-4d75-a8ed-e14fdad8d576",
+      "name": "Loop Over all Chapters"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1552,
+        16
+      ],
+      "id": "cf8a14bb-7b5b-43fc-8659-43e337356a31",
+      "name": "Wait 2s",
+      "webhookId": "a3161083-d5b0-418a-948d-c198c5802891"
+    },
+    {
+      "parameters": {
+        "tableName": "story-for-kids",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "id",
+              "fieldValue": "={{ $('Split story in Chapters').item.json.historia_id }}"
+            },
+            {
+              "fieldId": "chapter",
+              "fieldValue": "={{ $('Split story in Chapters').item.json.capitulo_numero }}"
+            },
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $('Split story in Chapters').item.json.titulo }}"
+            },
+            {
+              "fieldId": "story-text",
+              "fieldValue": "={{ $('Split story in Chapters').item.json.texto_original }}"
+            }
+          ]
+        },
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.awsDynamoDb",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        -192
+      ],
+      "id": "92dd7fa3-e03c-42c2-b5e9-97069448ad21",
+      "name": "bkp in DynamoDB",
+      "credentials": {
+        "aws": {
+          "id": "7jBWQE26lrRKVQAa",
+          "name": "awsIamApi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "function": "arn:aws:lambda:us-east-1:062064578824:function:create-video",
+        "payload": "={\n  \"historia_id\": \"{{ $('Split story in Chapters').item.json.historia_id }}\"\n}"
+      },
+      "type": "n8n-nodes-base.awsLambda",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        -384
+      ],
+      "id": "f096ff53-9c46-425d-add8-d93688210cf0",
+      "name": "Generate the final Story Video",
+      "credentials": {
+        "aws": {
+          "id": "7jBWQE26lrRKVQAa",
+          "name": "awsIamApi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## STORY GENERATION\n",
+        "height": 896,
+        "width": 1920,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1424,
+        -448
+      ],
+      "id": "e858cce9-0fce-42d3-ba88-d600a4f6c81c",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## IMAGES , AUDIOS, SUBTITLE, VIDEO - AWS GENERETION",
+        "height": 896,
+        "width": 1488,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        560,
+        -448
+      ],
+      "id": "13fbdd7d-a372-42a7-96b8-c1db9ab8f55f",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"texto_ssml\": {{ JSON.stringify($json.texto_ssml) }},\n  \"historia_id\": {{ JSON.stringify($json.historia_id) }},\n  \"capitulo_index\": {{ $json.capitulo_numero || 0 }},\n  \"prompt_image\": {{ JSON.stringify($json.prompt_img) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1008,
+        -32
+      ],
+      "id": "3d935537-36e3-4ab6-93ed-71d327113bdf",
+      "name": "item-looping"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "46a007aa-1b51-45a9-ba25-1c7164a91342",
+              "name": "message",
+              "value": "Create a random story with a child-friendly context, happy and nice story, dividing it into sections like chapters; something simple and lively, suitable for children at the early stages of learning to read. please dont use special characters, and the output need to be a clear text. the story MUST HAVE the maximum of 4 chapters",
+              "type": "string"
+            },
+            {
+              "id": "a4513ab9-028a-4fcd-81b6-49ca49e8a156",
+              "name": "datatime",
+              "value": "={{ $now.toISO().toString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1280,
+        -160
+      ],
+      "id": "cd395eb4-354a-4530-92fd-33776e47e30c",
+      "name": "story prompt"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=based on the story ({{ $json.output }})\n\n1.0. inclue one more information in each (title and story),as a property\n imageGeneration;\n\n2.0. Based on the chapter outline, define important information about each character in the scenes, so that during image generation the characteristics will be maintained, giving consistency to the story.\nIndicate [Character][What he/she is][Physical characteristics of the character][colors][Main or secondary character]\nIf there is more than one character in the story, this information should be given for each character.\ninclude this information in the imageGeneration property created.\n\n3.0. Create a 1-sentence visual description for a children's book. Start with 'Wholesome children's book illustration in 2D papercut craft style'. Focus on a unique stylized character performing an unusual daily activity. Use layered paper textures, depth of field, and soft studio lighting. Ensure the setting is Soft colors, happy atmosphere. No real names. Do not use real people's names or sensitive topics.\ninclude this information in the imageGeneration property created.\n\n\n\"SAFETY & COMPLIANCE RULES FOR imageGeneration:\nNO AMBIGUOUS WORDS: Do not use words like 'basking', 'dreamy', 'soft-focus', 'sensual', 'glowing skin', or 'flesh'.\nUSE TECHNICAL TERMS: Instead of 'dreamy', use 'depth of field'. Instead of 'basking', use 'playing under the sun' or 'sitting in the sunlight'.\nKIDS-SAFE ONLY: Ensure all descriptions are strictly G-rated. Focus on 'vibrant colors', 'bright daylight', and 'joyful atmosphere'.\nNO REAL NAMES: Never use names of real people, celebrities, or trademarked characters. Use 'a small bunny' or 'a cheerful child' instead.\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -704,
+        -160
+      ],
+      "id": "32db84e6-bfc6-4ad3-b7ba-5eb44b1dca48",
+      "name": "AI Agent - Character Definitions"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Limpeza do JSON\nconst rawOutput = $('AI Agent - Character Definitions').first().json.output;\n\n// CORREÇÃO: Pegar o índice [0] do match para obter a string\nconst jsonMatch = rawOutput.match(/\\{[\\s\\S]*\\}/);\nconst cleanJson = jsonMatch ? jsonMatch[0] : rawOutput;\n\nconst historiaHash = Math.random().toString(36).substring(2, 10).toUpperCase();\n\ntry {\n  const parsed = JSON.parse(cleanJson);\n  \n  // 2. NORMALIZAÇÃO: O seu JSON atual tem os capítulos dentro de parsed.story como um OBJETO\n  let chaptersRaw = parsed.chapters || parsed.story || [];\n  \n  // Se 'chaptersRaw' for um objeto (como no seu erro), transforma em Array\n  let chaptersArray = [];\n  if (!Array.isArray(chaptersRaw) && typeof chaptersRaw === 'object') {\n    chaptersArray = Object.values(chaptersRaw);\n  } else {\n    chaptersArray = chaptersRaw;\n  }\n\n  if (chaptersArray.length === 0) throw new Error(\"Nenhum capítulo encontrado\");\n\n  return chaptersArray.map((item, index) => {\n    const titulo = item.title || \"Capítulo \" + (index + 1);\n    const conteudoStory = item.story || \"\"; \n    let promptImg = item.imageGeneration || \"\";\n    \n    let textoParaAudio = `${titulo}, <break time=\"500ms\"/> ${conteudoStory}`;\n\n    let textoSSML = textoParaAudio\n      .replace(/(\\.|\\?|!)\\s+/g, '$1 <break time=\"300ms\"/> ') \n      .replace(/\\n\\n/g, ' <break time=\"1s\"/> ');\n\n    const narrativaSSML = `<speak><prosody rate=\"92%\">${textoSSML}</prosody></speak>`;\n\n    return {\n      json: {\n        historia_id: historiaHash,\n        capitulo_numero: index + 1,\n        titulo: titulo,\n        texto_original: conteudoStory,\n        texto_ssml: narrativaSSML,\n        prompt_img: promptImg\n      }\n    };\n  });\n\n} catch (e) {\n  return [{ json: { erro: \"Falha no Parse\", detalhes: e.message, primeiro_caractere: cleanJson[0] } }];\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        -192
+      ],
+      "id": "7212c6c7-bc93-4d61-9d72-89c380809f08",
+      "name": "Split story in Chapters"
+    },
+    {
+      "parameters": {
+        "function": "arn:aws:lambda:us-east-1:062064578824:function:ProcStoryChapter",
+        "payload": "={\n  \"texto_ssml\": {{ JSON.stringify($json.texto_ssml) }},\n  \"historia_id\": {{ JSON.stringify($json.historia_id) }},\n  \"capitulo_index\": {{ $json.capitulo_index || 0 }},\n  \"prompt_image\": {{ JSON.stringify($json.prompt_image) }}\n}"
+      },
+      "type": "n8n-nodes-base.awsLambda",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        -32
+      ],
+      "id": "9547fabc-f310-4286-b915-61b042368f2a",
+      "name": "Create Audio, subtitles  and Images with Poly and Bedrock",
+      "retryOnFail": false,
+      "credentials": {
+        "aws": {
+          "id": "7jBWQE26lrRKVQAa",
+          "name": "awsIamApi"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message }}",
+        "options": {
+          "systemMessage": "=# ROLE\nYou are a creative writer for children's books.\n\n# TASK\nCreate a happy and positive story based on the user's message: \"{{ $json.message }}\"\nThe story MUST be divided into exactly 4 chapters.\n\n# OUTPUT FORMAT\nReturn ONLY a valid JSON object. Do not include any explanations, introduction, or markdown code blocks (like ```json). \nThe JSON must follow this exact structure:\n\n{\n  \"title\": \"Main Story Title\",\n  \"chapters\": [\n    {\n      \"title\": \"Chapter 1 Title\",\n      \"story\": \"Chapter 1 text...\",\n      \"imageGeneration\": \"Wholesome children's book illustration in 2D papercut craft style... [description of character and action]\", for all kids ages.\n    },\n    ... (total of 4 chapters)\n  ]\n}\n\n# CONSTRAINTS\n- Return ONLY the JSON object.\n- Max length of request text allowed is 4000 bytes \n- textToImageParams/text: expected maxLength: 490 \n- No special characters.\n- Ensure visual consistency: describe the same character features in all imageGeneration fields.\n\n\"IMAGE GENERATION DYNAMICS:\nCHARACTER CONSISTENCY: Define a fixed physical description for the main character in Chapter 1 and REPEAT this exact description in all 4 chapters.\nSCENE VARIATION: For each chapter, the 'Setting' and 'Action' MUST change according to the story plot.\nCOMPOSITION:\nChapter 1: Character introduction in their home/starting point.\nChapter 2: Character interacting with a new object or friend in a different area.\nChapter 3: An action-oriented scene .\nChapter 4: A celebratory or resting scene with a different lighting, or something similar.\nMANDATORY FORMULA: 'Wholesome children's book illustration in 2D papercut craft style, [FIXED CHARACTER DESCRIPTION], [SPECIFIC ACTION FROM THIS CHAPTER], [NEW UNIQUE SETTING], layered paper textures, depth of field, soft studio lighting.'\"\n\n\n\"DYNAMICS & CHARACTER INTERACTION:\nMULTI-CHARACTER SCENES: Starting from Chapter 2, ALWAYS include the new characters mentioned in the story text in the imageGeneration field.\nINTERACTION CLARITY: Describe the main character and the secondary characters performing an action together (e.g., 'sharing a snack', 'pointing at a map', 'dancing').\nCOMPOSITION VARIANTS:\nChapter 1 (Close-up): Focus on the protagonist to establish their look.\nChapter 2 (Medium Shot): Protagonist meeting a friend; both characters visible.\nChapter 3 (Wide Shot): The group in a large, new environment (park, library, square).\nChapter 4 (Group Hug/Celebration): All characters together in a festive setting.\nFIXED VISUAL TAGS: Keep the physical traits of the secondary characters constant too.\"\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1040,
+        -160
+      ],
+      "id": "776e7e97-b7c3-4254-90a7-aa6ca2352504",
+      "name": "AI Agent - Story"
+    }
+  ],
+  "connections": {
+    "AWS Bedrock Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Character Definitions",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "AI Agent - Story",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "story prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detect Sentiment": {
+      "main": [
+        [
+          {
+            "node": "WAIT 1s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IS IT A POSITIVE STORY?": {
+      "main": [
+        [
+          {
+            "node": "Split story in Chapters",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "story prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WAIT 1s": {
+      "main": [
+        [
+          {
+            "node": "IS IT A POSITIVE STORY?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over all Chapters": {
+      "main": [
+        [
+          {
+            "node": "Generate the final Story Video",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "bkp in DynamoDB",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "item-looping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 2s": {
+      "main": [
+        [
+          {
+            "node": "Loop Over all Chapters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "bkp in DynamoDB": {
+      "main": [
+        []
+      ]
+    },
+    "item-looping": {
+      "main": [
+        [
+          {
+            "node": "Create Audio, subtitles  and Images with Poly and Bedrock",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "story prompt": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Story",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Character Definitions": {
+      "main": [
+        [
+          {
+            "node": "Detect Sentiment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split story in Chapters": {
+      "main": [
+        [
+          {
+            "node": "Loop Over all Chapters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Audio, subtitles  and Images with Poly and Bedrock": {
+      "main": [
+        [
+          {
+            "node": "Wait 2s",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "AI Agent - Story": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Character Definitions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "47a63b91cf78e301f87d1bffb30735e0360918ba3dc7095fcb27acd34cef3b19"
+  }
+}
