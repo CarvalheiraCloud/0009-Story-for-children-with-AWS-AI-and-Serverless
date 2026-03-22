@@ -11,11 +11,11 @@ def ms_to_srt(ms):
     return f"{hours:02d}:{minutes:02d}:{seconds:02d},{millis:03d}"
 
 def lambda_handler(event, context):
-    bedrock = boto3.client('bedrock-runtime', region_name='us-east-1')
-    polly = boto3.client('polly', region_name='us-east-1')
+    bedrock = boto3.client('bedrock-runtime', region_name='us-east-1') ## mude aqui ## 
+    polly = boto3.client('polly', region_name='us-east-1') ## mude aqui ##
     s3 = boto3.client('s3')
     
-    bucket_name = "carvalheira.cloud" 
+    bucket_name = "carvalheira.cloud"  ## mude aqui ##
     h_id = event.get('historia_id', 'historia_padrao')
     cap_idx = event.get('capitulo_index', 0)
     prompt_image = event.get('prompt_image','blank image')
@@ -32,14 +32,14 @@ def lambda_handler(event, context):
 
     # 1. ÁUDIO
     res_audio = polly.synthesize_speech(
-        Text=texto_ssml_ajustado, OutputFormat='mp3', VoiceId='Justin', Engine='standard', TextType='ssml'
+        Text=texto_ssml_ajustado, OutputFormat='mp3', VoiceId='Justin', Engine='standard', TextType='ssml'  ## mude aqui ##
     )
     audio_key = f"{h_id}/audio_{cap_idx}.mp3"
     s3.put_object(Bucket=bucket_name, Key=audio_key, Body=res_audio['AudioStream'].read())
 
     # 2. LEGENDA (SRT) COM PONTUAÇÃO RECUPERADA
     res_marks = polly.synthesize_speech(
-        Text=texto_ssml_ajustado, OutputFormat='json', SpeechMarkTypes=['word'], VoiceId='Justin', Engine='standard', TextType='ssml'
+        Text=texto_ssml_ajustado, OutputFormat='json', SpeechMarkTypes=['word'], VoiceId='Justin', Engine='standard', TextType='ssml' ## mude aqui ##
     )
     
     marks_lines = res_marks['AudioStream'].read().decode('utf-8').splitlines()
@@ -88,6 +88,7 @@ def lambda_handler(event, context):
         "imageGenerationConfig": {"numberOfImages": 1, "height": 768, "width": 1280, "cfgScale": 8.0}
     })
     
+    ## mude aqui ##
     res_image = bedrock.invoke_model(body=body_image, modelId="amazon.titan-image-generator-v2:0", accept="application/json", contentType="application/json")
     res_body = json.loads(res_image.get("body").read())
     img_base64 = res_body.get("images")[0]

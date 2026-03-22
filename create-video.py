@@ -12,7 +12,7 @@ def limpar_srt(caminho_srt):
 
 def lambda_handler(event, context):
     s3 = boto3.client('s3')
-    bucket_name = "carvalheira.cloud"
+    bucket_name = "carvalheira.cloud" ## mude aqui ##
     h_id = str(event.get('historia_id', '')).strip()
     
     # 1. ESCOLHER MÚSICA ALEATÓRIA
@@ -20,7 +20,7 @@ def lambda_handler(event, context):
     tem_musica = False
     try:
         num_musica = random.randint(1, 6)
-        musica_key = f"story-musics/Little_Footsteps_{num_musica:02d}.mp3"
+        musica_key = f"story-musics/Little_Footsteps_{num_musica:02d}.mp3" ## mude aqui ##
         s3.download_file(bucket_name, musica_key, musica_p)
         tem_musica = True
     except: pass
@@ -51,7 +51,7 @@ def lambda_handler(event, context):
         if i < len(legendas):
             s3.download_file(bucket_name, legendas[i], srt_p)
             limpar_srt(srt_p)
-            style = "FontSize=26,PrimaryColour=&H00FFFF,OutlineColour=&H000000,BorderStyle=1,Outline=2,Alignment=2,Fontname=Montserrat"
+            style = "FontSize=26,PrimaryColour=&H00FFFF,OutlineColour=&H000000,BorderStyle=1,Outline=2,Alignment=2,Fontname=Montserrat" ## mude aqui se desejar outra fonte - precisa incluir no Lambda Layer ##
             v_filter += f",subtitles='{srt_p.replace(':', '\\:')}':fontsdir=/opt/fonts:force_style='{style}'"
 
         # Aqui geramos o vídeo SEM música ainda
